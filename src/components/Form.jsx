@@ -1,99 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Form.css';
+import axios from 'axios';
 
 //ggfgsdgf
 function Form() {
-    const [task, setTask] = useState('');
-    const [tasks, setTasks] = useState([]);
-    const [error, setError] = useState(null);
+    const [property, setProperty] = useState({
+        title: ""
+    });
 
-    // Fetch existing tasks on component mount
-    useEffect(() => {
-        fetchTasks();
-    }, []);
+    const handleChange = (e) => {
+        setProperty({ ...property, [e.target.name]: e.target.value });
+    };
 
-    const fetchTasks = async () => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         try {
-            const response = await fetch("http://localhost:5173/itemInserting/getTasks");
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            if (!Array.isArray(data)) {
-                throw new Error('Invalid response format');
-            }
-            setTasks(data);
+            await axios.post("http://localhost:3000/itemInserting", property);
+            alert("Property added successfully!");
+            setProperty({ title: ""}); 
         } catch (error) {
-            setError("Failed to fetch tasks. Please ensure the server is running.");
-            console.error("Error fetching tasks:", error);
-            setTasks([]); // Reset tasks on error
+            console.error("Error adding property:", error);
+            alert("Failed to add property.");
         }
     };
-
-    const addTask = async () => {
-        if (task.trim()) {
-            try {
-                setError(null);
-                const response = await fetch("http://localhost:5173/itemInserting/addTask", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify({ task: task.trim() })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log("Success:", data);
-                
-                // Fetch updated task list instead of manually updating state
-                await fetchTasks();
-                setTask('');
-            } catch (error) {
-                setError("Failed to add task. Please ensure the server is running.");
-                console.error("Error:", error);
-            }
-        }
-    };
-
-    const deleteTask = async (id) => {
-        try {
-            const response = await fetch(`http://localhost:5173/itemInserting/deleteTask/${id}`, {
-                method: "DELETE"
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            await fetchTasks();
-        } catch (error) {
-            setError("Failed to delete task");
-            console.error("Error deleting task:", error);
-        }
-    };
-
-    const toggleComplete = async (id, completed) => {
-        try {
-            const response = await fetch(`http://localhost:5173/itemInserting/updateTask/${id}`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ completed: !completed })
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            await fetchTasks();
-        } catch (error) {
-            setError("Failed to update task");
-            console.error("Error updating task:", error);
-        }
-    };
-
     return (
         <div className="container">
             <h2>To-Do List</h2>
